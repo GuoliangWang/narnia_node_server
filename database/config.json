@@ -1,0 +1,41 @@
+{
+  "development": {
+    "username": "root",
+    "password": "Wolf7758521",
+    "database": "narnia_app",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "charset": "utf8mb4",
+      "collate": "utf8mb4_unicode_ci",
+      "supportBigNumbers": true,
+      "bigNumberStrings": true
+    }
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "charset": "utf8mb4",
+      "collate": "utf8mb4_unicode_ci",
+      "supportBigNumbers": true,
+      "bigNumberStrings": true
+    }
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "charset": "utf8mb4",
+      "collate": "utf8mb4_unicode_ci",
+      "supportBigNumbers": true,
+      "bigNumberStrings": true
+    }
+  }
+}
