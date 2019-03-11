@@ -17,7 +17,8 @@ module.exports = app => {
       width: INTEGER,
       height: INTEGER,
       size: INTEGER,
-      duration: FLOAT
+      duration: FLOAT,
+      title: STRING
   });
 
   return User;

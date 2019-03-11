@@ -25,6 +25,7 @@ module.exports = app => {
   router.get(basePath + '/oss/sts', waferInst.auth.validationMiddleware, controller.oss.sts)
   router.get(basePath+ '/video/list', waferInst.auth.validationMiddleware, controller.video.list)
   router.post(basePath+ '/video/save', waferInst.auth.validationMiddleware, controller.video.save)
+  router.get(basePath+ '/video/info', waferInst.auth.validationMiddleware, controller.video.info)
 
   get('/', controller.home.index)
   // resources('users', '/users/index', controller.users)

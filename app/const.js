@@ -14,7 +14,31 @@ const auth = {
   read: 1 // 允许查看
 }
 
+const favoriteType = {
+	video: 1
+}
+
+// 【1:上传视频】【2:视频审核通过】【3:视频审核未通过】【4:视频违规被删除】【5:申请观看】【6:同意观看】 【7:拒绝观看】
+const msgType = {
+	applyShowVideo: 1,
+	applyShowVideoApproved: 2,
+	applyShowVideoRejected: 3, 
+	videoDeleted: 4, 
+	applyWatchVideo: 5,
+	applyWatchVideoApproved: 6, 
+	applyWatchVideoRejected: 7, 
+}
+
+const msgStatus = {
+  waitingOpt: 1, // 等待处理
+  operated: 2, // 已处理
+}
+
 module.exports = {
   applyStatus,
-  privacy
+  privacy,
+  auth,
+  favoriteType,
+  msgType,
+  msgStatus
 }

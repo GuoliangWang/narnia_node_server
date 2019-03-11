@@ -14,8 +14,6 @@ function toInt(str) {
 
 class VideoController extends Controller {
   async list() {
-    // console.log('signatureUrl:',(new oss()).signatureUrl)
-
     const ctx = this.ctx;
      let userInfo
     if (ctx.state.$wxInfo.loginState === 1) {
@@ -143,14 +141,78 @@ class VideoController extends Controller {
     const status = iconst.applyStatus.waitingApproval
     const is_del = 0
     const video = await ctx.model.Video.create({ slice_id, title, url, cover, privacy, width, height, size, duration, create_userid, status, is_del });
+    const contentObj = {}
+    await ctx.model.Message.create({ from_userid: create_userid, to_userid: 1, type: iconst.msgType.applyShowVideo, is_del: 0, content: JSON.stringify(contentObj), ref_id: video.id })
     ctx.status = 201;
     ctx.body = video;
   }
 
-  async update() {
+  async info() {
+    const ctx = this.ctx;
+    let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const errors = this.app.validator.validate({id: 'id'}, ctx.query)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
+    }
+    const videoId = ctx.query.id
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    const query = { 
+      where: {
+        id: {
+          [Op.eq]: videoId
+        }
+      }
+    }
+    const list = await ctx.model.Video.findAll(query);
+    if(list.length === 0) {
+      ctx.body = 'video not found'
+      ctx.status = 404
+      return
+    }
+    const {respList, users} = await this.setReferenceForVideos(list, userInfo)
+    if (users.length === 0) {
+      ctx.body = 'video creater not found'
+      ctx.status = 404
+      return
+    }
+    const videoInfo = respList[0]
+    const favoriteQuery = { 
+      where: {
+        type: {
+          [Op.eq]: iconst.favoriteType.video
+        },
+        target_id: {
+          [Op.eq]: videoInfo.id
+        },
+        is_del: {
+          [Op.eq]: 0
+        },
+      }
+    }
+    const favoriteList = this.app.model.Favorite.findAll(favoriteQuery)
+    const isFavorite = favoriteList.length > 0 ? 1 : 0
+    const createUserInfo = JSON.parse(users[0].user_info)
+    const {msgList, users: msgUsers} = await ctx.service.message.videoApplyMsgListFor(videoInfo, userInfo)
+    // const msgList = this.app.model.Message.findAll()
+
+    ctx.state.data = { video_info: videoInfo, user_info: userInfo, create_user_info:createUserInfo, is_favorite:isFavorite, apply_msg_list:msgList, apply_msg_users:msgUsers }
   }
 
-  async destroy() {
+  async update() {
+
+  }
+
+  async delete() {
 
   }
 
@@ -193,6 +255,62 @@ class VideoController extends Controller {
       });
     })
   }
+
+  async setReferenceForVideos(list, userInfo) {
+    const ctx = this.ctx
+    let openIdList = []
+    const conf = this.app.config.aliOss
+    // await promiseForReadVideoSts(item)
+    const respList = []
+    for(let i = 0; i < list.length; i++) {
+      const item = list[i]
+      openIdList.push(item.create_userid)
+      let authorized = false
+      if (item.create_userid === userInfo.openId) { // 作者本人有权
+        authorized = true
+      } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
+        authorized = false
+      } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
+        authorized = false
+      } else { // 作者允许观看的，才可观看
+        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
+        if (authrity && authrity.auth === iconst.auth.read) {
+          authorized = true
+        }
+      }
+      authorized = authorized ? 1 : 0
+      if (authorized) {
+        const urlKey = 'sts:video:url:'+item.id
+        const coverKey = 'sts:video:cover:'+item.id
+        let redisUrl = await this.app.redis.get(urlKey)
+        let redisCover = await this.app.redis.get(coverKey)
+        if (!redisUrl) {
+          let stsRes = await this.promiseForReadVideoSts(item)
+          if (stsRes) {
+            redisUrl = stsRes.videoUrl
+            redisCover = stsRes.coverUrl
+            await this.app.redis.set(urlKey, redisUrl)
+            await this.app.redis.expire(urlKey, conf.TokenExpireTime / 2)
+            await this.app.redis.set(coverKey, redisCover)
+            await this.app.redis.expire(coverKey, conf.TokenExpireTime / 2)
+          }
+        }
+        if (redisUrl) {
+          item.url = redisUrl
+        } 
+        if (redisCover){
+          item.cover = redisCover
+        }
+        respList.push(Object.assign({authorized}, item.toJSON()))
+      }
+    }
+    const openIdSet = new Set(openIdList)
+    openIdList = Array.from(openIdSet)
+    const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
+    console.log('users length:', users.length)
+    return { respList: respList, users }    
+  }
+
 
 }
 

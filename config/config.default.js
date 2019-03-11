@@ -2,6 +2,7 @@
 
 'use strict';
 const env = process.env;
+
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */

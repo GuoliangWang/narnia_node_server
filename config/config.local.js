@@ -5,6 +5,8 @@
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
+const env = process.env;
+
 module.exports = appInfo => {
   /**
    * built-in config
