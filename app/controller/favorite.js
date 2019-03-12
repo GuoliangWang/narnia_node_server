@@ -1,7 +1,7 @@
 // app/controller/users.js
 const Controller = require('egg').Controller;
 const iconst = require('../const')
-const debug = require('debug')('VideoController')
+const debug = require('debug')('FavoriteController')
 const OSSClient = require('ali-oss');
 const crypto = require('crypto')
 const moment = require('moment')
@@ -12,7 +12,7 @@ function toInt(str) {
   return parseInt(str, 10) || 0;
 }
 
-class VideoController extends Controller {
+class FavoriteController extends Controller {
   async list() {
     const ctx = this.ctx;
      let userInfo
@@ -23,26 +23,16 @@ class VideoController extends Controller {
         ctx.state.code = -1
         return
     }
-    const errors = this.app.validator.validate({slice_id: 'id'}, ctx.query)
-    if (errors) {
-      ctx.body = errors
-      ctx.status = 422
-      return
-    }
     const Sequelize = this.app.Sequelize
     const Op = Sequelize.Op
-    const slice_id = toInt(ctx.query.slice_id)
-    let before_video_id = toInt(ctx.query.before_video_id)
-    if (!before_video_id) {
-      before_video_id = Number.MAX_SAFE_INTEGER
+    let before_favorite_id = toInt(ctx.query.before_favorite_id)
+    if (!before_favorite_id) {
+      before_favorite_id = Number.MAX_SAFE_INTEGER
     }
     const query = { 
       where: {
         id: {
-          [Op.lt]: before_video_id
-        },
-        slice_id: {
-          [Op.eq]: slice_id
+          [Op.lt]: before_favorite_id
         }
       },
       order: [
@@ -50,67 +40,61 @@ class VideoController extends Controller {
       ],
       limit: 20
     }
-    const list = await ctx.model.Video.findAll(query);
+    const list = await ctx.model.Favorite.findAll(query);
     const queryMinId = { 
       where: {
-        slice_id: {
-          [Op.eq]: slice_id
-        }
       }
     }
     const min_video_id = await ctx.model.Video.min('id', queryMinId)
     let openIdList = []
     const conf = this.app.config.aliOss
     // await promiseForReadVideoSts(item)
-     
-    const {respList, users} = await this.setReferenceForVideos(list, userInfo)
-    // const respList = []
-    // for(let i = 0; i < list.length; i++) {
-    //   const item = list[i]
-    //   openIdList.push(item.create_userid)
-    //   let authorized = false
-    //   if (item.create_userid === userInfo.openId) { // 作者本人有权
-    //     authorized = true
-    //   } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
-    //     authorized = false
-    //   } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
-    //     authorized = false
-    //   } else { // 作者允许观看的，才可观看
-    //     const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
-    //     if (authrity && authrity.auth === iconst.auth.read) {
-    //       authorized = true
-    //     }
-    //   }
-    //   item.authorized = authorized ? 1 : 0
-    //   if (authorized) {
-    //     const urlKey = 'sts:video:url:'+item.id
-    //     const coverKey = 'sts:video:cover:'+item.id
-    //     let redisUrl = await this.app.redis.get(urlKey)
-    //     let redisCover = await this.app.redis.get(coverKey)
-    //     if (!redisUrl) {
-    //       let stsRes = await this.promiseForReadVideoSts(item)
-    //       if (stsRes) {
-    //         redisUrl = stsRes.videoUrl
-    //         redisCover = stsRes.coverUrl
-    //         await this.app.redis.set(urlKey, redisUrl)
-    //         await this.app.redis.expire(urlKey, conf.TokenExpireTime / 2)
-    //         await this.app.redis.set(coverKey, redisCover)
-    //         await this.app.redis.expire(coverKey, conf.TokenExpireTime / 2)
-    //       }
-    //     }
-    //     if (redisUrl) {
-    //       item.url = redisUrl
-    //     } 
-    //     if (redisCover){
-    //       item.cover = redisCover
-    //     }
-    //   }
-    //   respList.push(Object.assign({authorized}, item.toJSON()))
-    // }
-    // const openIdSet = new Set(openIdList)
-    // openIdList = Array.from(openIdSet)
-    // const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
-    // console.log('respList', respList)
+    const respList = []
+    for(let i = 0; i < list.length; i++) {
+      const item = list[i]
+      openIdList.push(item.create_userid)
+      let authorized = false
+      if (item.create_userid === userInfo.openId) { // 作者本人有权
+        authorized = true
+      } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
+        authorized = false
+      } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
+        authorized = false
+      } else { // 作者允许观看的，才可观看
+        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
+        if (authrity && authrity.auth === iconst.auth.read) {
+          authorized = true
+        }
+      }
+      item.authorized = authorized ? 1 : 0
+      if (authorized) {
+        const urlKey = 'sts:video:url:'+item.id
+        const coverKey = 'sts:video:cover:'+item.id
+        let redisUrl = await this.app.redis.get(urlKey)
+        let redisCover = await this.app.redis.get(coverKey)
+        if (!redisUrl) {
+          let stsRes = await this.promiseForReadVideoSts(item)
+          if (stsRes) {
+            redisUrl = stsRes.videoUrl
+            redisCover = stsRes.coverUrl
+            await this.app.redis.set(urlKey, redisUrl)
+            await this.app.redis.expire(urlKey, conf.TokenExpireTime / 2)
+            await this.app.redis.set(coverKey, redisCover)
+            await this.app.redis.expire(coverKey, conf.TokenExpireTime / 2)
+          }
+        }
+        if (redisUrl) {
+          item.url = redisUrl
+        } 
+        if (redisCover){
+          item.cover = redisCover
+        }
+        respList.push(Object.assign({authorized}, item.toJSON()))
+      }
+    }
+    const openIdSet = new Set(openIdList)
+    openIdList = Array.from(openIdSet)
+    const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
     ctx.state.data = { list: respList, min_video_id, users }
   }
 
@@ -209,7 +193,6 @@ class VideoController extends Controller {
     // const msgList = this.app.model.Message.findAll()
 
     ctx.state.data = { video_info: videoInfo, user_info: userInfo, create_user_info:createUserInfo, is_favorite:isFavorite, apply_msg_list:msgList, apply_msg_users:msgUsers }
-    console.log('ctx.state.data,', ctx.state.data)
   }
 
   async update() {
@@ -276,7 +259,7 @@ class VideoController extends Controller {
       } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
         authorized = false
       } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
-        authorized = true
+        authorized = false
       } else { // 作者允许观看的，才可观看
         const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
         if (authrity && authrity.auth === iconst.auth.read) {
@@ -307,8 +290,8 @@ class VideoController extends Controller {
         if (redisCover){
           item.cover = redisCover
         }
+        respList.push(Object.assign({authorized, auth}, item.toJSON()))
       }
-      respList.push(Object.assign({authorized, auth}, item.toJSON()))
     }
     const openIdSet = new Set(openIdList)
     openIdList = Array.from(openIdSet)
@@ -320,4 +303,4 @@ class VideoController extends Controller {
 
 }
 
-module.exports = VideoController;
+module.exports = FavoriteController;

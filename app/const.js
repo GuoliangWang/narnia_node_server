@@ -11,7 +11,9 @@ const privacy = {
 }
 
 const auth = {
-  read: 1 // 允许查看
+  read: 1, // 允许查看
+  apply: 2, // 正在申请
+  rejected: 3, // 已拒绝
 }
 
 const favoriteType = {
@@ -32,6 +34,7 @@ const msgType = {
 const msgStatus = {
   waitingOpt: 1, // 等待处理
   operated: 2, // 已处理
+  normal: 3, // 不需要处理
 }
 
 module.exports = {

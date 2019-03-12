@@ -11,7 +11,8 @@ module.exports = app => {
       content: {type:STRING(4096)}, // 根据不同的的消息type, 存放制定json格式数据
       created_at: DATE,
       updated_at: DATE,
-      is_del: INTEGER
+      is_del: INTEGER,
+      status: INTEGER, 
   });
 
   return User;
