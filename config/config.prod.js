@@ -5,6 +5,8 @@
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
+const env = process.env;
+console.log('product')
 module.exports = appInfo => {
   /**
    * built-in config
@@ -16,7 +18,7 @@ module.exports = appInfo => {
     myAppName: 'naniar_node_server',
     sequelize: {
       username: 'root',
-      password: "Wolf7758521",
+      password: env.MySQL_PASSWORD,
       dialect: 'mysql',
       host: '127.0.0.1',
       port: 3306,
@@ -33,6 +35,14 @@ module.exports = appInfo => {
         pass: userConfig.sequelize.password,
         char: 'utf8mb4'
     }
+  }
+  config.redis = {
+    client: {
+      port: 6379,          // Redis port
+      host: '127.0.0.1',   // Redis host
+      password: 'redis5566',
+      db: 0,
+    },
   }
   return {
     ...config,

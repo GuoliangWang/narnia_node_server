@@ -66,6 +66,7 @@ module.exports = app => {
             config,
             AuthDbService: require('./lib/mysql/AuthDbService'),
             auth: require('./lib/auth'),
+            ERRORS
             // uploader: require('./lib/upload'),
             // tunnel: require('./lib/tunnel'),
             // message: require('./lib/message'),

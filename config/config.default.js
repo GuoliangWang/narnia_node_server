@@ -2,7 +2,7 @@
 
 'use strict';
 const env = process.env;
-
+console.log('default')
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
@@ -110,6 +110,9 @@ module.exports = appInfo => {
   config.validate = {
     // convert: false,
     // validateRoot: false,
+  }
+  config.logger = {
+    disableConsoleAfterReady: false
   }
   return {
     ...config,
