@@ -35,6 +35,8 @@ const msgStatus = {
   waitingOpt: 1, // 等待处理
   operated: 2, // 已处理
   normal: 3, // 不需要处理
+  approved: 4, // 已同意
+  rejected: 5, // 已拒绝
 }
 
 module.exports = {

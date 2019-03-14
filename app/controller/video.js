@@ -23,7 +23,8 @@ class VideoController extends Controller {
         ctx.state.code = -1
         return
     }
-    const errors = this.app.validator.validate({slice_id: 'id'}, ctx.query)
+    ctx.query.slice_id = toInt(ctx.query.slice_id)
+    const errors = this.app.validator.validate({slice_id: {type: 'int'} }, ctx.query)
     if (errors) {
       ctx.body = errors
       ctx.status = 422
@@ -38,11 +39,26 @@ class VideoController extends Controller {
     }
     const query = { 
       where: {
-        id: {
-          [Op.lt]: before_video_id
-        },
+        [Op.or]: [
+          {
+            create_userid: {
+              [Op.eq]: userInfo.openId
+            }
+          },
+          {
+            id: {
+              [Op.lt]: before_video_id
+            },
+            status: {
+              [Op.eq]: iconst.applyStatus.approved
+            }
+          }
+        ],
         slice_id: {
           [Op.eq]: slice_id
+        },
+        is_del: {
+          [Op.eq]: 0
         }
       },
       order: [
@@ -55,6 +71,9 @@ class VideoController extends Controller {
       where: {
         slice_id: {
           [Op.eq]: slice_id
+        },
+        is_del: {
+          [Op.eq]: 0
         }
       }
     }
@@ -144,8 +163,12 @@ class VideoController extends Controller {
     const status = iconst.applyStatus.waitingApproval
     const is_del = 0
     const video = await ctx.model.Video.create({ slice_id, title, url, cover, privacy, width, height, size, duration, create_userid, status, is_del });
-    const contentObj = {}
-    await ctx.model.Message.create({ from_userid: create_userid, to_userid: 1, type: iconst.msgType.applyShowVideo, is_del: 0, content: JSON.stringify(contentObj), ref_id: video.id, status: iconst.msgStatus.waitingOpt })
+    const msg = await ctx.service.message.applyShowVideo(video)
+    if (!msg) {
+      ctx.status = 500;
+      ctx.body = 'send apply msg fail';
+      return
+    }
     ctx.status = 201;
     ctx.body = video;
   }
@@ -160,7 +183,8 @@ class VideoController extends Controller {
         ctx.state.code = -1
         return
     }
-    const errors = this.app.validator.validate({id: 'id'}, ctx.query)
+    ctx.query.id = toInt(ctx.query.id)
+    const errors = this.app.validator.validate({id: {type: 'int'} }, ctx.query)
     if (errors) {
       ctx.body = errors
       ctx.status = 422
@@ -218,6 +242,100 @@ class VideoController extends Controller {
 
   async delete() {
 
+  }
+  async approveShow() {
+    const ctx = this.ctx;
+     let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const isAdmin = await ctx.service.user.isAdmin()
+    if (!isAdmin) {
+      ctx.body = 'you are not admin'
+      ctx.status = 400
+      return
+    }
+    const rules = {
+      message_id: {type: 'int'},
+      approved: {type: 'int'},
+    }
+    console.log('ctx.body:', ctx.request.body)
+    const errors = this.app.validator.validate(rules, ctx.request.body)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
+    }
+    const Op = this.app.Sequelize.Op
+    const { message_id, approved } = ctx.request.body;
+    const msg = await this.app.model.Message.findOne({
+      where: {
+        id: {
+          [Op.eq]: message_id
+        }
+      }
+    })
+    if (!msg) {
+      ctx.status = 400;
+      ctx.body = `msg id [${message_id}] not exist`
+      return
+    }
+    const video = await ctx.model.Video.findOne({
+      where: {
+        id: {
+          [Op.eq]: msg.ref_id
+        }
+      }
+    });
+    if (!video) {
+      ctx.status = 400;
+      ctx.body = `video id [${msg.ref_id}] not exist`
+      return
+    }
+    let status
+    if (approved) {
+      if (video.status === iconst.applyStatus.approved) {
+        ctx.status = 400;
+        ctx.body = `video id [${msg.ref_id}] have been approved `
+        return
+      } 
+      status = iconst.applyStatus.approved
+    } else {
+      if (video.status === iconst.applyStatus.rejected) {
+        ctx.status = 400;
+        ctx.body = `video id [${msg.ref_id}] have been rejected `
+        return
+      } 
+      status = iconst.applyStatus.rejected
+    }
+    console.log('change status:', status)
+    const updateResult = await ctx.model.Video.update(
+      { status }, 
+      { 
+        where: {
+          id: {
+            [Op.eq]: video.id
+          }
+        } 
+      }
+    )
+    const updateCount = updateResult[0]
+    if (updateCount != 1) {
+      ctx.status = 500
+      ctx.body = `Video.update number: ${updateCount}`
+      return
+    }
+    const sendMsgResult = await ctx.service.message.approveShowVideo(msg, video, approved)
+    if(!sendMsgResult.success) {
+      ctx.status = 500
+      ctx.body = sendMsgResult.message
+      return
+    }
+    ctx.state.data = 'operated'
   }
 
   promiseForReadVideoSts(video) {  

@@ -25,7 +25,7 @@ class AuthController extends Controller {
         return
     }
     const rules = {
-      video_id: 'id'
+      video_id: {type: 'int'}
     }
     console.log('ctx.body:', ctx.request.body)
     const errors = this.app.validator.validate(rules, ctx.request.body)
@@ -83,7 +83,7 @@ class AuthController extends Controller {
         return
     }
     const rules = {
-      message_id: 'id',
+      message_id: {type: 'int'},
       approved: {type: 'int'},
     }
     console.log('ctx.body:', ctx.request.body)
@@ -137,13 +137,25 @@ class AuthController extends Controller {
       ctx.body = `apply info not exist`
       return
     }
-    auth.auth = approved ? iconst.auth.read : iconst.auth.rejected
-    const updateAuthResult = await ctx.model.VideoAuthrity.update(auth)
-    msg.status = iconst.msgStatus.operated
-    const updateMsgResult = await ctx.model.Message.update(msg)
-    console.log('updateMsgResult', updateMsgResult)
-    const msgType = approved ? iconst.msgType.applyWatchVideoApproved : iconst.msgType.applyWatchVideoRejected
-    const operatedMsg = await ctx.model.Message.create({ from_userid: userInfo.openId, to_userid: msg.from_userid, type: msgType, is_del: 0, content: JSON.stringify({}), ref_id: msg.ref_id, status: iconst.msgStatus.normal })
+    const newAuth = approved ? iconst.auth.read : iconst.auth.rejected
+    const updateAuthResult = await ctx.model.VideoAuthrity.update(
+      {
+        auth: newAuth
+      },
+      {
+        where: {
+          id: {
+            [Op.eq]: auth.id
+          }
+        }
+      }
+    )
+    const sendMsgResult = await ctx.service.message.approveWatchVideo(msg, userinfo, approved)
+    if(!sendMsgResult.success) {
+      ctx.status = 500
+      ctx.body = sendMsgResult.message
+      return
+    }
     ctx.status = 201
     ctx.body = { msg, auth, operatedMsg }
   }

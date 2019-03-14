@@ -144,7 +144,8 @@ class FavoriteController extends Controller {
         ctx.state.code = -1
         return
     }
-    const errors = this.app.validator.validate({id: 'id'}, ctx.query)
+    ctx.query.id = toInt(ctx.query.id)
+    const errors = this.app.validator.validate({id: {type: 'int'} }, ctx.query)
     if (errors) {
       ctx.body = errors
       ctx.status = 422
