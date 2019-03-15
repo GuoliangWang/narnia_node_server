@@ -46,14 +46,14 @@ class VideoController extends Controller {
             }
           },
           {
-            id: {
-              [Op.lt]: before_video_id
-            },
             status: {
               [Op.eq]: iconst.applyStatus.approved
             }
           }
         ],
+        id: {
+          [Op.lt]: before_video_id
+        },
         slice_id: {
           [Op.eq]: slice_id
         },
@@ -144,7 +144,7 @@ class VideoController extends Controller {
         return
     }
     const rules = {
-      slice_id: 'id',
+      slice_id: {type: 'int'},
       url: {type: 'string'},
       cover: {type: 'string'},
       privacy: {type: 'int'},
@@ -229,7 +229,7 @@ class VideoController extends Controller {
     const favoriteList = this.app.model.Favorite.findAll(favoriteQuery)
     const isFavorite = favoriteList.length > 0 ? 1 : 0
     const createUserInfo = JSON.parse(users[0].user_info)
-    const {msgList, users: msgUsers} = await ctx.service.message.videoApplyMsgListFor(videoInfo, userInfo)
+    const {msgList, users: msgUsers} = await ctx.service.message.videoApplyMsgListFor(videoInfo.id, userInfo)
     // const msgList = this.app.model.Message.findAll()
 
     ctx.state.data = { video_info: videoInfo, user_info: userInfo, create_user_info:createUserInfo, is_favorite:isFavorite, apply_msg_list:msgList, apply_msg_users:msgUsers }

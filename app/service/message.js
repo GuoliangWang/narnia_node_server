@@ -14,7 +14,12 @@ class MessageService extends Service {
   //   // 就可以直接通过 this.ctx 获取 ctx 了
   //   // 还可以直接通过 this.app 获取 app 了
   // }
-  async videoApplyMsgListFor(video, userInfo) {
+  async videoApplyMsgListFor(videoId, userInfo, beforeMsgId) {
+    if (!beforeMsgId) {
+      beforeMsgId = Number.MAX_SAFE_INTEGER
+    } else {
+      beforeMsgId = toInt(beforeMsgId)
+    }
     const Sequelize = this.app.Sequelize
     const Op = Sequelize.Op
     let msgQuery
@@ -32,16 +37,18 @@ class MessageService extends Service {
             }
           }
         ],
-        [Op.and]: {
-          ref_id: {
-            [Op.eq]: video.id
-          }
+        ref_id: {
+          [Op.eq]: videoId
         },
-        [Op.and]: {
-          type: {
-            [Op.in]: [iconst.msgType.applyWatchVideo, iconst.msgType.applyWatchVideoApproved, iconst.msgType.applyWatchVideoRejected]
-          }
-        }
+        type: {
+          [Op.in]: [iconst.msgType.applyWatchVideo, iconst.msgType.applyWatchVideoApproved, iconst.msgType.applyWatchVideoRejected]
+        },
+        status: {
+          [Op.ne]: iconst.msgStatus.normal
+        },
+        id: {
+          [Op.lt]: beforeMsgId
+        },
       },
       order: [
         ['id', 'ASC']

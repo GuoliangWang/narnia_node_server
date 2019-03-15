@@ -109,7 +109,7 @@ class FavoriteController extends Controller {
         return
     }
     const rules = {
-      slice_id: 'id',
+      slice_id: {type: 'int'},
       url: {type: 'string'},
       cover: {type: 'string'},
       privacy: {type: 'int'},

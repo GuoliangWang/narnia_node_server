@@ -109,6 +109,31 @@ class MessageController extends Controller {
     return respList
   }
 
+  async applyWathVideoMsgList() {
+    const ctx = this.ctx;
+    let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const rules = {
+      video_id: {type: 'int'}
+    }
+    ctx.request.query.video_id = toInt(ctx.request.query.video_id)
+    const errors = this.app.validator.validate(rules, ctx.request.query)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
+    }
+    const {video_id, before_msg_id} = ctx.request.query
+    const {msgList, users: msgUsers} = await ctx.service.message.videoApplyMsgListFor(video_id, userInfo, before_msg_id)
+    ctx.state.data = { apply_msg_list: msgList, apply_msg_users: msgUsers }
+  }
+
 }
 
 module.exports = MessageController;
