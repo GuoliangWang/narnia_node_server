@@ -25,7 +25,7 @@ class AuthController extends Controller {
         return
     }
     const rules = {
-      video_id: 'id'
+      video_id: {type: 'int'}
     }
     console.log('ctx.body:', ctx.request.body)
     const errors = this.app.validator.validate(rules, ctx.request.body)
@@ -66,7 +66,7 @@ class AuthController extends Controller {
       return
     }
     auth = await ctx.model.VideoAuthrity.create({video_id, user_id: userInfo.openId, auth: iconst.auth.apply, is_del: 0})
-    const contentObj = {}
+    const contentObj = { reason: '我想看您的作品' }
     const msg = await ctx.model.Message.create({ from_userid, to_userid: to_userid, type: iconst.msgType.applyWatchVideo, is_del: 0, content: JSON.stringify(contentObj), ref_id: video.id, status: iconst.msgStatus.waitingOpt })
     ctx.status = 201
     ctx.body = {msg, auth}
@@ -83,7 +83,7 @@ class AuthController extends Controller {
         return
     }
     const rules = {
-      message_id: 'id',
+      message_id: {type: 'int'},
       approved: {type: 'int'},
     }
     console.log('ctx.body:', ctx.request.body)
@@ -107,6 +107,17 @@ class AuthController extends Controller {
       ctx.body = `msg id [${message_id}] not exist`
       return
     }
+    if (msg.type !== iconst.msgType.applyWatchVideo) {
+      ctx.status = 400;
+      ctx.body = `msg type is not applyWatchVideo`
+      return
+    }
+    if (userInfo.openId !== msg.to_userid) {
+      ctx.status = 400;
+      ctx.body = `msg is not to you`
+      return
+    }
+
     // const video = await ctx.model.Video.findOne({
     //   where: {
     //     id: {
@@ -119,6 +130,8 @@ class AuthController extends Controller {
     //   ctx.body = `video id [${msg.ref_id}] not exist`
     //   return
     // }
+    console.log(' msg.ref_id',  msg.ref_id)
+    console.log(' msg.from_userid',  msg.from_userid)
     const auth = await ctx.model.VideoAuthrity.findOne({
       where: {
         video_id: {
@@ -129,23 +142,38 @@ class AuthController extends Controller {
         },
         auth: {
           [Op.eq]: iconst.auth.apply
+        },
+        is_del: {
+          [Op.eq]: 0
         }
       }
     });
     if (!auth) {
       ctx.status = 400;
-      ctx.body = `apply info not exist`
+      ctx.body = `video_authority table, apply info not exist`
       return
     }
-    auth.auth = approved ? iconst.auth.read : iconst.auth.rejected
-    const updateAuthResult = await ctx.model.VideoAuthrity.update(auth)
-    msg.status = iconst.msgStatus.operated
-    const updateMsgResult = await ctx.model.Message.update(msg)
-    console.log('updateMsgResult', updateMsgResult)
-    const msgType = approved ? iconst.msgType.applyWatchVideoApproved : iconst.msgType.applyWatchVideoRejected
-    const operatedMsg = await ctx.model.Message.create({ from_userid: userInfo.openId, to_userid: msg.from_userid, type: msgType, is_del: 0, content: JSON.stringify({}), ref_id: msg.ref_id, status: iconst.msgStatus.normal })
+    const newAuth = approved ? iconst.auth.read : iconst.auth.rejected
+    const updateAuthResult = await ctx.model.VideoAuthrity.update(
+      {
+        auth: newAuth
+      },
+      {
+        where: {
+          id: {
+            [Op.eq]: auth.id
+          }
+        }
+      }
+    )
+    const sendMsgResult = await ctx.service.message.approveWatchVideo(msg, userInfo, approved)
+    if(!sendMsgResult.success) {
+      ctx.status = 500
+      ctx.body = sendMsgResult.message
+      return
+    }
     ctx.status = 201
-    ctx.body = { msg, auth, operatedMsg }
+    ctx.body = { msg, auth }
   }
 
 

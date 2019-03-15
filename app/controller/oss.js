@@ -43,7 +43,7 @@ class AliOssController extends Controller {
        }
       const resPolicyBase64 = new Buffer(JSON.stringify(resPolicyText)).toString('base64')
       const signature = crypto.createHmac('sha1', result.credentials.AccessKeySecret).update(resPolicyBase64).digest('base64')
-      console.log(result);
+      console.log('assumeRole result:', result);
       // res.set('Access-Control-Allow-Origin', '*');
       // res.set('Access-Control-Allow-METHOD', 'GET');
       const res = {

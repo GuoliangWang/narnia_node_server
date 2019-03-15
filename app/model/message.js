@@ -12,6 +12,7 @@ module.exports = app => {
       created_at: DATE,
       updated_at: DATE,
       is_del: INTEGER,
+      ref_id: INTEGER,
       status: INTEGER, 
   });
 
