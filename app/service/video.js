@@ -31,15 +31,20 @@ class MessageService extends Service {
         accessKeySecret: conf.AccessKeySecret
       });
       client.assumeRole(conf.RoleArn, policy, conf.TokenExpireTime).then((result) => {
+        const region = 'oss-cn-beijing'
+        const bucket = 'narnia-app'
+        const signatureHost = `http://${bucket}.${region}.aliyuncs.com`
         const oss = new OSSClient({
-          region: 'oss-cn-beijing',
+          region,
           accessKeyId: result.credentials.AccessKeyId,
           accessKeySecret: result.credentials.AccessKeySecret,
           stsToken: result.credentials.SecurityToken,
-          bucket: 'narnia-app'
+          bucket
         })
-        const videoUrl = oss.signatureUrl(videoPath, {expires: conf.TokenExpireTime})
-        const coverUrl = oss.signatureUrl(coverPath, {expires: conf.TokenExpireTime})
+        let videoUrl = oss.signatureUrl(videoPath, {expires: conf.TokenExpireTime})
+        let coverUrl = oss.signatureUrl(coverPath, {expires: conf.TokenExpireTime})
+        videoUrl = videoUrl.replace(signatureHost, host)
+        coverUrl = coverUrl.replace(signatureHost, host)
         const res = {
           videoUrl,
           coverUrl

@@ -53,8 +53,8 @@ class AliOssController extends Controller {
         policy: resPolicyBase64,
         SecurityToken: result.credentials.SecurityToken,
         Expiration: result.credentials.Expiration,
-        host: 'https://www.narniaclub.com',
-        // host: 'http://narnia-app.oss-cn-beijing.aliyuncs.com',
+        cdnHost: 'https://www.narniaclub.com',
+        uploadHost: 'https://narnia-app.oss-cn-beijing.aliyuncs.com',
         ossFilePath: userOssFilePathPre + uuid + suffix
       }
       ctx.state.data = res
