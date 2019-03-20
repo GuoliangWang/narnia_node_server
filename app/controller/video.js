@@ -291,6 +291,83 @@ class VideoController extends Controller {
     ctx.state.data = 'operated'
   }
 
+  async adminDelete() {
+    const ctx = this.ctx;
+     let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const isAdmin = await ctx.service.user.isAdmin()
+    if (!isAdmin) {
+      ctx.body = 'you are not admin'
+      ctx.status = 400
+      return
+    }
+    const rules = {
+      message_id: {type: 'int'}
+    }
+    console.log('ctx.body:', ctx.request.body)
+    const errors = this.app.validator.validate(rules, ctx.request.body)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
+    }
+    const Op = this.app.Sequelize.Op
+    const { message_id } = ctx.request.body;
+    const msg = await this.app.model.Message.findOne({
+      where: {
+        id: {
+          [Op.eq]: message_id
+        }
+      }
+    })
+    if (!msg) {
+      ctx.status = 400;
+      ctx.body = `msg id [${message_id}] not exist`
+      return
+    }
+    const video = await ctx.model.Video.findOne({
+      where: {
+        id: {
+          [Op.eq]: msg.ref_id
+        }
+      }
+    });
+    if (!video) {
+      ctx.status = 400;
+      ctx.body = `video id [${msg.ref_id}] not exist`
+      return
+    }
+    const updateResult = await ctx.model.Video.update(
+      { is_del: 1 }, 
+      { 
+        where: {
+          id: {
+            [Op.eq]: video.id
+          }
+        } 
+      }
+    )
+    const updateCount = updateResult[0]
+    if (updateCount != 1) {
+      ctx.status = 500
+      ctx.body = `Video.update number: ${updateCount}`
+      return
+    }
+    const sendMsgResult = await ctx.service.message.adminDeleteShowVideo(msg, video)
+    if(!sendMsgResult.success) {
+      ctx.status = 500
+      ctx.body = sendMsgResult.message
+      return
+    }
+    ctx.state.data = 'operated'
+  }  
+
   async setReferenceForVideos(list, userInfo) {
     const ctx = this.ctx
     let openIdList = []
@@ -317,8 +394,8 @@ class VideoController extends Controller {
       }
       authorized = authorized ? 1 : 0
       if (authorized) {
-        const urlKey = 'sts:video:url:'+item.id
-        const coverKey = 'sts:video:cover:'+item.id
+        const urlKey = iconst.redisKey.stsVideoUrlPre + item.id
+        const coverKey = iconst.redisKey.stsVideoCoverPre + item.id
         let redisUrl = await this.app.redis.get(urlKey)
         let redisCover = await this.app.redis.get(coverKey)
         if (!redisUrl) {

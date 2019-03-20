@@ -26,11 +26,12 @@ module.exports = app => {
   router.get(basePath+ '/video/list', waferInst.auth.validationMiddleware, controller.video.list)
   router.post(basePath+ '/video/save', waferInst.auth.validationMiddleware, controller.video.save)
   router.get(basePath+ '/video/info', waferInst.auth.validationMiddleware, controller.video.info)
-  router.post(basePath+ '/video/approve_show', waferInst.auth.validationMiddleware, controller.video.approveShow)
   router.get(basePath+ '/message/apply_show_video_msg_list', waferInst.auth.validationMiddleware, controller.message.applyShowVideoMsgList)
   router.get(basePath+ '/message/apply_watch_video_msg_list', waferInst.auth.validationMiddleware, controller.message.applyWathVideoMsgList)
   router.post(basePath+ '/auth/apply_watch', waferInst.auth.validationMiddleware, controller.auth.applyWatch)
   router.post(basePath+ '/auth/approve_watch', waferInst.auth.validationMiddleware, controller.auth.approveWatch)
+  router.post(basePath+ '/admin/video/approve_show', waferInst.auth.validationMiddleware, controller.video.approveShow)
+  router.post(basePath+ '/admin/video/delete', waferInst.auth.validationMiddleware, controller.video.adminDelete)
 
 
   get('/', controller.home.index)

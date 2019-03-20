@@ -82,8 +82,8 @@ class MessageController extends Controller {
       }
       authorized = authorized ? 1 : 0
       if (authorized) {
-        const urlKey = 'sts:video:url:'+item.id
-        const coverKey = 'sts:video:cover:'+item.id
+        const urlKey = iconst.redisKey.stsVideoUrlPre + item.id
+        const coverKey = iconst.redisKey.stsVideoCoverPre + item.id
         let redisUrl = await this.app.redis.get(urlKey)
         let redisCover = await this.app.redis.get(coverKey)
         if (!redisUrl) {

@@ -150,6 +150,29 @@ class MessageService extends Service {
     return { success: true }
   }
 
-
+  async adminDeleteShowVideo(applyMsg, video) {
+    const ctx = this.ctx
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    const adminOpenId = await this.ctx.service.user.virtualAdminOpenId()
+    const fromMsgStatus = iconst.msgStatus.deleted
+    const updateResult = await ctx.model.Message.update({ status : fromMsgStatus }, {
+      where: {
+        id: {
+          [Op.eq]: applyMsg.id
+        }
+      }
+    })
+    if (updateResult[0] === 0) {
+      return { success: false, message: 'did not update applyMsg status' }
+    }
+    const msgType = iconst.msgType.applyShowVideoDeleted
+    const msg = await ctx.model.Message.create({ from_userid: adminOpenId, to_userid: video.create_userid, type: msgType, is_del: 0, content: JSON.stringify({apply_msg_id: applyMsg.id}), ref_id: video.id, status: iconst.msgStatus.normal })
+    if (!msg) {
+      return { success: false, message: 'did not create notify msg' }
+    }
+    return { success: true }
+  }
+  
 }
 module.exports = MessageService;
