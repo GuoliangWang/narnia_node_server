@@ -134,6 +134,43 @@ class MessageController extends Controller {
     ctx.state.data = { apply_msg_list: msgList, apply_msg_users: msgUsers }
   }
 
+async receivedList() {
+    const ctx = this.ctx;
+    let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    const msgList = await ctx.service.message.receivedList(ctx.query.before_msg_id, userInfo)
+    let openIdList = []
+    let videoIdList = []
+    msgList.forEach(item => {
+        openIdList.push(item.from_userid)
+        openIdList.push(item.to_userid)
+        videoIdList.push(item.ref_id)
+    })
+    const openIdSet = new Set(openIdList)
+    openIdList = Array.from(openIdSet)
+    const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
+    const videoIdSet = new Set(videoIdList)
+    videoIdList = Array.from(videoIdSet)
+    const videoQuery = {
+      where: {
+        id: {
+          [Op.in]: videoIdList
+        }
+      }
+    }
+    let videos = await ctx.model.Video.findAll(videoQuery)
+    videos = await this.preparedVideosFor(videos, userInfo, true)
+    ctx.state.data = { list: msgList, users, videos}
+  }
+
 }
 
 module.exports = MessageController;

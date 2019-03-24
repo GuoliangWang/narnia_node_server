@@ -25,7 +25,7 @@ const msgType = {
 	applyShowVideo: 1,
 	applyShowVideoApproved: 2,
 	applyShowVideoRejected: 3, 
-	videoDeleted: 4, 
+	// videoDeleted: 4, 
 	applyWatchVideo: 5,
 	applyWatchVideoApproved: 6, 
 	applyWatchVideoRejected: 7, 
@@ -49,6 +49,11 @@ const redisKey = {
   sliceLastuploadPre: 'slice:lastupload:'
 }
 
+const popularVideoStatus = {
+  on: 1,
+  off: 2,
+}
+
 module.exports = {
   applyStatus,
   privacy,
@@ -56,5 +61,6 @@ module.exports = {
   favoriteType,
   msgType,
   msgStatus,
-  redisKey
+  redisKey,
+  popularVideoStatus
 }

@@ -3,13 +3,14 @@
 module.exports = app => {
   const { STRING, INTEGER, DATE } = app.Sequelize;
 
-  const model = app.model.define('book_last_upload', {
+  const Chapter = app.model.define('chapter', {
       id: { type: INTEGER, primaryKey: true, autoIncrement: true },
-      book_id: INTEGER,
-      video_id: INTEGER,
+      title: STRING,
+      cover: STRING,
       created_at: DATE,
       updated_at: DATE,
+      book_id: INTEGER
   });
 
-  return model;
+  return Chapter;
 };

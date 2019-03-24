@@ -78,10 +78,6 @@ class VideoController extends Controller {
       }
     }
     const min_video_id = await ctx.model.Video.min('id', queryMinId)
-    let openIdList = []
-    const conf = this.app.config.aliOss
-    // await promiseForReadVideoSts(item)
-     
     const {respList, users} = await this.setReferenceForVideos(list, userInfo)
     ctx.state.data = { list: respList, min_video_id, users }
   }
@@ -179,7 +175,7 @@ class VideoController extends Controller {
         },
       }
     }
-    const favoriteList = this.app.model.Favorite.findAll(favoriteQuery)
+    const favoriteList = await this.app.model.Favorite.findAll(favoriteQuery)
     const isFavorite = favoriteList.length > 0 ? 1 : 0
     const createUserInfo = JSON.parse(users[0].user_info)
     const {msgList, users: msgUsers} = await ctx.service.message.videoApplyMsgListFor(videoInfo.id, userInfo)
@@ -288,6 +284,9 @@ class VideoController extends Controller {
       ctx.body = sendMsgResult.message
       return
     }
+    if (approved) {
+      await ctx.service.lastupload.updateLastUploadVideo(video)
+    }
     ctx.state.data = 'operated'
   }
 
@@ -386,7 +385,7 @@ class VideoController extends Controller {
       } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
         authorized = true
       } else { // 作者允许观看的，才可观看
-        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
+        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id, user_id: userInfo.openId} })
         if (authrity && authrity.auth === iconst.auth.read) {
           authorized = true
           auth = authrity.auth
@@ -426,6 +425,54 @@ class VideoController extends Controller {
     return { respList: respList, users }    
   }
 
+  async uploadedList() {
+    const ctx = this.ctx;
+     let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    let before_video_id = toInt(ctx.query.before_video_id)
+    if (!before_video_id) {
+      before_video_id = Number.MAX_SAFE_INTEGER
+    }
+    const query = { 
+      where: {
+        create_userid: {
+          [Op.eq]: userInfo.openId
+        },
+        id: {
+          [Op.lt]: before_video_id
+        },
+        is_del: {
+          [Op.eq]: 0
+        }
+      },
+      order: [
+        ['id', 'DESC']
+      ],
+      limit: 20
+    }
+    const list = await ctx.model.Video.findAll(query);
+    const queryMinId = { 
+      where: {
+        create_userid: {
+          [Op.eq]: userInfo.openId
+        },
+        is_del: {
+          [Op.eq]: 0
+        }
+      }
+    }
+    const min_video_id = await ctx.model.Video.min('id', queryMinId)
+    const {respList, users} = await this.setReferenceForVideos(list, userInfo)
+    ctx.state.data = { list: respList, min_video_id, users }
+  }
 
 }
 

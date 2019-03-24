@@ -8,50 +8,17 @@ function toInt(str) {
 }
 
 class SliceController extends Controller {
-  async list() {
-    const ctx = this.ctx;
-    const query = { limit: 100, offset: 0 };
-    ctx.body = await ctx.model.Slice.findAll(query);
-  }
-
-  async info() {
-    const ctx = this.ctx;
-    ctx.body = await ctx.model.Slice.findByPk(toInt(ctx.query.id));
-  }
-
-  async create() {
-    const ctx = this.ctx;
-    const { name, age } = ctx.request.body;
-    const user = await ctx.model.User.create({ name, age });
-    ctx.status = 201;
-    ctx.body = user;
-  }
-
-  async update() {
-    const ctx = this.ctx;
-    const id = toInt(ctx.params.id);
-    const user = await ctx.model.User.findById(id);
-    if (!user) {
-      ctx.status = 404;
-      return;
+  async ref() {
+    const { ctx } = this;
+    const errors = this.app.validator.validate({slice_ids: {type: 'string'} }, ctx.query)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
     }
-
-    const { name, age } = ctx.request.body;
-    await user.update({ name, age });
-    ctx.body = user;
-  }
-
-  async destroy() {
-    const ctx = this.ctx;
-    const id = toInt(ctx.params.id);
-    const user = await ctx.model.User.findById(id);
-    if (!user) {
-      ctx.status = 404;
-      return;
-    }
-
-    await user.destroy();
-    ctx.status = 200;
+    const { slice_ids } = ctx.query
+    const last_upload_videos = await ctx.service.lastupload.sliceLastUploadVideos(slice_ids)
+    ctx.state.data = { last_upload_videos }
   }
 }
 

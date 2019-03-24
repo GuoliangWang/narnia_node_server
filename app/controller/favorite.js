@@ -31,6 +31,12 @@ class FavoriteController extends Controller {
     }
     const query = { 
       where: {
+        userid: {
+          [Op.eq]: userInfo.openId
+        },
+        is_del: {
+          [Op.eq]: 0
+        },
         id: {
           [Op.lt]: before_favorite_id
         }
@@ -43,59 +49,34 @@ class FavoriteController extends Controller {
     const list = await ctx.model.Favorite.findAll(query);
     const queryMinId = { 
       where: {
+        userid: {
+          [Op.eq]: userInfo.openId
+        },
+        is_del: {
+          [Op.eq]: 0
+        }
       }
     }
-    const min_video_id = await ctx.model.Video.min('id', queryMinId)
-    let openIdList = []
-    const conf = this.app.config.aliOss
-    // await promiseForReadVideoSts(item)
-    const respList = []
-    for(let i = 0; i < list.length; i++) {
-      const item = list[i]
-      openIdList.push(item.create_userid)
-      let authorized = false
-      if (item.create_userid === userInfo.openId) { // 作者本人有权
-        authorized = true
-      } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
-        authorized = false
-      } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
-        authorized = false
-      } else { // 作者允许观看的，才可观看
-        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
-        if (authrity && authrity.auth === iconst.auth.read) {
-          authorized = true
-        }
+    const min_favoriate_id = await ctx.model.Favorite.min('id', queryMinId)
+    let videoIdList = []
+    list.forEach(item => {
+      if (item.type === iconst.favoriteType.video) {
+        videoIdList.push(item.target_id)
       }
-      item.authorized = authorized ? 1 : 0
-      if (authorized) {
-        const urlKey = 'sts:video:url:'+item.id
-        const coverKey = 'sts:video:cover:'+item.id
-        let redisUrl = await this.app.redis.get(urlKey)
-        let redisCover = await this.app.redis.get(coverKey)
-        if (!redisUrl) {
-          let stsRes = await this.promiseForReadVideoSts(item)
-          if (stsRes) {
-            redisUrl = stsRes.videoUrl
-            redisCover = stsRes.coverUrl
-            await this.app.redis.set(urlKey, redisUrl)
-            await this.app.redis.expire(urlKey, conf.TokenExpireTime / 2)
-            await this.app.redis.set(coverKey, redisCover)
-            await this.app.redis.expire(coverKey, conf.TokenExpireTime / 2)
-          }
+    })
+    const queryVideos = { 
+      where: {
+        id: {
+          [Op.in]: videoIdList
+        },
+        is_del: {
+          [Op.eq]: 0
         }
-        if (redisUrl) {
-          item.url = redisUrl
-        } 
-        if (redisCover){
-          item.cover = redisCover
-        }
-        respList.push(Object.assign({authorized}, item.toJSON()))
       }
     }
-    const openIdSet = new Set(openIdList)
-    openIdList = Array.from(openIdSet)
-    const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
-    ctx.state.data = { list: respList, min_video_id, users }
+    const videos = await ctx.model.Video.findAll(queryVideos)
+    const { respList, users} = await ctx.service.video.setReferenceForVideos(videos, userInfo)
+    ctx.state.data = { list, min_favoriate_id, videos: respList, users }
   }
 
   async save() {
@@ -109,11 +90,8 @@ class FavoriteController extends Controller {
         return
     }
     const rules = {
-      slice_id: {type: 'int'},
-      url: {type: 'string'},
-      cover: {type: 'string'},
-      privacy: {type: 'int'},
-      duration: {type: 'number'}
+      type: {type: 'int'},
+      target_id: {type: 'int'}
     }
     console.log('ctx.body:', ctx.request.body)
     const errors = this.app.validator.validate(rules, ctx.request.body)
@@ -122,20 +100,19 @@ class FavoriteController extends Controller {
       ctx.status = 422
       return
     }
-    const { slice_id, title, url, cover, privacy, width, height, size, duration } = ctx.request.body;
+    const { type, target_id } = ctx.request.body;
     // created_at updated_at 看看是否有默认值
-    const create_userid = userInfo.openId
-    const status = iconst.applyStatus.waitingApproval
+    const userid = userInfo.openId
     const is_del = 0
-    const video = await ctx.model.Video.create({ slice_id, title, url, cover, privacy, width, height, size, duration, create_userid, status, is_del });
-    const contentObj = {}
-    await ctx.model.Message.create({ from_userid: create_userid, to_userid: 1, type: iconst.msgType.applyShowVideo, is_del: 0, content: JSON.stringify(contentObj), ref_id: video.id, status: iconst.msgStatus.waitingOpt })
+    const favorite = await ctx.model.Favorite.create({ type, userid, target_id, is_del });
     ctx.status = 201;
-    ctx.body = video;
+    ctx.body = favorite;
   }
 
-  async info() {
+  async delete() {
     const ctx = this.ctx;
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
     let userInfo
     if (ctx.state.$wxInfo.loginState === 1) {
         // loginState 为 1，登录态校验成功
@@ -144,164 +121,63 @@ class FavoriteController extends Controller {
         ctx.state.code = -1
         return
     }
-    ctx.query.id = toInt(ctx.query.id)
-    const errors = this.app.validator.validate({id: {type: 'int'} }, ctx.query)
+    const rules = {
+      type: {type: 'int'},
+      target_id: {type: 'int'}
+    }
+    const errors = this.app.validator.validate(rules, ctx.request.body)
     if (errors) {
       ctx.body = errors
       ctx.status = 422
       return
     }
-    const videoId = ctx.query.id
-    const Sequelize = this.app.Sequelize
-    const Op = Sequelize.Op
-    const query = { 
-      where: {
-        id: {
-          [Op.eq]: videoId
-        }
-      }
-    }
-    const list = await ctx.model.Video.findAll(query);
-    if(list.length === 0) {
-      ctx.body = 'video not found'
-      ctx.status = 404
-      return
-    }
-    const {respList, users} = await this.setReferenceForVideos(list, userInfo)
-    if (users.length === 0) {
-      ctx.body = 'video creater not found'
-      ctx.status = 404
-      return
-    }
-    const videoInfo = respList[0]
-    const favoriteQuery = { 
+    const { type, target_id } = ctx.request.body;
+    const favorite = await ctx.model.Favorite.findOne({
       where: {
         type: {
-          [Op.eq]: iconst.favoriteType.video
+          [Op.eq]: type
         },
         target_id: {
-          [Op.eq]: videoInfo.id
-        },
-        is_del: {
-          [Op.eq]: 0
-        },
-      }
-    }
-    const favoriteList = this.app.model.Favorite.findAll(favoriteQuery)
-    const isFavorite = favoriteList.length > 0 ? 1 : 0
-    const createUserInfo = JSON.parse(users[0].user_info)
-    const {msgList, users: msgUsers} = await ctx.service.message.videoApplyMsgListFor(videoInfo, userInfo)
-    // const msgList = this.app.model.Message.findAll()
-
-    ctx.state.data = { video_info: videoInfo, user_info: userInfo, create_user_info:createUserInfo, is_favorite:isFavorite, apply_msg_list:msgList, apply_msg_users:msgUsers }
-  }
-
-  async update() {
-
-  }
-
-  async delete() {
-
-  }
-
-  promiseForReadVideoSts(video) {  
-    return new Promise((resolve) => {
-      const openId = video.create_userid
-      const host = 'https://www.narniaclub.com'
-      const videoPath = video.url.substring(host.length + 1)
-      const coverPath = video.cover.substring(host.length + 1)
-      console.log('coverPath:', coverPath)
-      const conf = this.app.config.aliOss
-      // let policy = JSON.stringify(conf.bucketReadPolicy)
-      let policy = JSON.stringify(conf.AllPolicy)
-      // if (conf.PolicyFile) {
-      //   policy = fs.readFileSync(path.resolve(__dirname, conf.PolicyFile)).toString('utf-8');
-      // }
-      const client = new OSSClient.STS({
-        accessKeyId: conf.AccessKeyId,
-        accessKeySecret: conf.AccessKeySecret
-      });
-      client.assumeRole(conf.RoleArn, policy, conf.TokenExpireTime).then((result) => {
-        const oss = new OSSClient({
-          region: 'oss-cn-beijing',
-          accessKeyId: result.credentials.AccessKeyId,
-          accessKeySecret: result.credentials.AccessKeySecret,
-          stsToken: result.credentials.SecurityToken,
-          bucket: 'narnia-app'
-        })
-        const videoUrl = oss.signatureUrl(videoPath, {expires: conf.TokenExpireTime})
-        const coverUrl = oss.signatureUrl(coverPath, {expires: conf.TokenExpireTime})
-        const res = {
-          videoUrl,
-          coverUrl
+          [Op.eq]: target_id
         }
-        resolve(res)
-      }).catch((err) => {
-        console.log('err:', err)
-        debug('Catch Error: %o', err)
-        resolve(null)
-      });
+      }
     })
-  }
-
-  async setReferenceForVideos(list, userInfo) {
-    const ctx = this.ctx
-    let openIdList = []
-    const conf = this.app.config.aliOss
-    // await promiseForReadVideoSts(item)
-    const respList = []
-    for(let i = 0; i < list.length; i++) {
-      const item = list[i]
-      openIdList.push(item.create_userid)
-      let authorized = false
-      let auth = 0
-      if (item.create_userid === userInfo.openId) { // 作者本人有权
-        authorized = true
-      } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
-        authorized = false
-      } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
-        authorized = false
-      } else { // 作者允许观看的，才可观看
-        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id} })
-        if (authrity && authrity.auth === iconst.auth.read) {
-          authorized = true
-          auth = authrity.auth
-        }
-      }
-      authorized = authorized ? 1 : 0
-      if (authorized) {
-        const urlKey = 'sts:video:url:'+item.id
-        const coverKey = 'sts:video:cover:'+item.id
-        let redisUrl = await this.app.redis.get(urlKey)
-        let redisCover = await this.app.redis.get(coverKey)
-        if (!redisUrl) {
-          let stsRes = await this.promiseForReadVideoSts(item)
-          if (stsRes) {
-            redisUrl = stsRes.videoUrl
-            redisCover = stsRes.coverUrl
-            await this.app.redis.set(urlKey, redisUrl)
-            await this.app.redis.expire(urlKey, conf.TokenExpireTime / 2)
-            await this.app.redis.set(coverKey, redisCover)
-            await this.app.redis.expire(coverKey, conf.TokenExpireTime / 2)
-          }
-        }
-        if (redisUrl) {
-          item.url = redisUrl
-        } 
-        if (redisCover){
-          item.cover = redisCover
-        }
-        respList.push(Object.assign({authorized, auth}, item.toJSON()))
-      }
+    if (!favorite) {
+      ctx.status = 400;
+      ctx.body = `favorite type: ${type} and target_id: ${target_id} not exist`;
+      return
     }
-    const openIdSet = new Set(openIdList)
-    openIdList = Array.from(openIdSet)
-    const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
-    console.log('users length:', users.length)
-    return { respList: respList, users }    
+    if (favorite.is_del) {
+      ctx.status = 400;
+      ctx.body = `favorite is deleted`;
+      return
+    }
+    if (favorite.userid !== userInfo.openId) {
+      ctx.status = 400;
+      ctx.body = `you are not the favorate user`;
+      return
+    }
+    const updateResult = await ctx.model.Favorite.update(
+      { is_del: 1 }, 
+      { 
+        where: {
+          type: {
+            [Op.eq]: type
+          },
+          target_id: {
+            [Op.eq]: target_id
+          }
+        } 
+      }
+    )
+    const updateCount = updateResult[0]
+    if (updateCount != 1) {
+      ctx.status = 500
+      ctx.body = `Favorite.update number: ${updateCount}`
+      return
+    }
+    ctx.state.data = 'operated'
   }
-
-
 }
 
 module.exports = FavoriteController;

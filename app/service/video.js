@@ -56,10 +56,65 @@ class MessageService extends Service {
         resolve(null)
       });
     })
+  }  
+
+  async setReferenceForVideos(list, userInfo) {
+    const ctx = this.ctx
+    let openIdList = []
+    const conf = this.app.config.aliOss
+    // await promiseForReadVideoSts(item)
+    const respList = []
+    for(let i = 0; i < list.length; i++) {
+      const item = list[i]
+      openIdList.push(item.create_userid)
+      let authorized = false
+      let auth = 0
+      if (item.create_userid === userInfo.openId) { // 作者本人有权
+        authorized = true
+      } else if (item.status !== iconst.applyStatus.approved) { // 未审核通过的,其他人无权观看
+        authorized = false
+      } else if (item.privacy === iconst.privacy.public) { // 审核通过的公开资源都有权观看
+        authorized = true
+      } else { // 作者允许观看的，才可观看
+        const authrity = await ctx.model.VideoAuthrity.findOne({ where: {video_id: item.id, user_id: userInfo.openId} })
+        if (authrity && authrity.auth === iconst.auth.read) {
+          authorized = true
+          auth = authrity.auth
+        }
+      }
+      authorized = authorized ? 1 : 0
+      if (authorized) {
+        const urlKey = iconst.redisKey.stsVideoUrlPre + item.id
+        const coverKey = iconst.redisKey.stsVideoCoverPre + item.id
+        let redisUrl = await this.app.redis.get(urlKey)
+        let redisCover = await this.app.redis.get(coverKey)
+        if (!redisUrl) {
+          let stsRes = await ctx.service.video.promiseForReadVideoSts(item)
+          // let stsRes = await this.promiseForReadVideoSts(item)
+          if (stsRes) {
+            redisUrl = stsRes.videoUrl
+            redisCover = stsRes.coverUrl
+            await this.app.redis.set(urlKey, redisUrl)
+            await this.app.redis.expire(urlKey, conf.TokenExpireTime / 2)
+            await this.app.redis.set(coverKey, redisCover)
+            await this.app.redis.expire(coverKey, conf.TokenExpireTime / 2)
+          }
+        }
+        if (redisUrl) {
+          item.url = redisUrl
+        } 
+        if (redisCover){
+          item.cover = redisCover
+        }
+      }
+      respList.push(Object.assign({authorized, auth}, item.toJSON()))
+    }
+    const openIdSet = new Set(openIdList)
+    openIdList = Array.from(openIdSet)
+    const users = await this.app.wafer.AuthDbService.getUsersByOpenIdList(openIdList)
+    console.log('users length:', users.length)
+    return { respList: respList, users }    
   }
-
-  
-
 
 }
 module.exports = MessageService;

@@ -75,7 +75,7 @@ function getUsersByOpenIdList (openIdList) {
     if (Object.prototype.toString.call(openIdList) !== '[object Array]') {
         return []
     }
-    return mysql('cSessionInfo').select('*').whereIn('open_id', openIdList)
+    return mysql('cSessionInfo').select('user_info').whereIn('open_id', openIdList)
 }
 
 module.exports = {

@@ -174,5 +174,40 @@ class MessageService extends Service {
     return { success: true }
   }
   
+  async receivedList(beforeMsgId, userInfo) {
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    if (!beforeMsgId) {
+      beforeMsgId = Number.MAX_SAFE_INTEGER
+    }
+    beforeMsgId = parseInt(beforeMsgId)
+    const msgQuery = {
+      where: {
+        id: {
+          [Op.lt]: beforeMsgId
+        },
+        type: {
+          [Op.in]:  [ iconst.msgType.applyShowVideoApproved, 
+                      iconst.msgType.applyShowVideoRejected,
+                      iconst.msgType.applyWatchVideo,
+                      iconst.msgType.applyWatchVideoApproved,
+                      iconst.msgType.applyWatchVideoRejected,
+                      iconst.msgType.applyShowVideoDeleted
+                    ]
+
+        },
+        to_userid: {
+          [Op.eq]: userInfo.openId
+        }
+      },
+      order: [
+        ['id', 'DESC']
+      ],
+      limit: 20
+    }
+    const msgList = await this.app.model.Message.findAll(msgQuery)
+    return msgList
+  }
+
 }
 module.exports = MessageService;
