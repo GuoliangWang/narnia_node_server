@@ -41,6 +41,7 @@ module.exports = app => {
   router.post(basePath+ '/admin/video/delete', waferInst.auth.validationMiddleware, controller.video.adminDelete)
   router.get(basePath + '/home/ref', controller.home.ref)
   router.get(basePath + '/chapter/ref', controller.chapters.ref)
+  router.get(basePath + '/slice/info', controller.slice.info)
   router.get(basePath + '/slice/ref', controller.slice.ref)
 
   get('/', controller.home.index)

@@ -8,6 +8,12 @@ function toInt(str) {
 }
 
 class SliceController extends Controller {
+  
+  async info() {
+    const ctx = this.ctx;
+    ctx.body = await ctx.model.Slice.findByPk(toInt(ctx.query.id));
+  }
+
   async ref() {
     const { ctx } = this;
     const errors = this.app.validator.validate({slice_ids: {type: 'string'} }, ctx.query)
