@@ -164,7 +164,7 @@ class VideoController extends Controller {
     const videoInfo = respList[0]
     const favoriteQuery = { 
       where: {
-        user_id: {
+        userid: {
           [Op.eq]: userInfo.openId
         },
         type: {
