@@ -144,33 +144,51 @@ class FavoriteController extends Controller {
         ctx.state.code = -1
         return
     }
-    const rules = {
-      type: {type: 'int'},
-      target_id: {type: 'int'}
+    const rulesId = {
+      favorite_id: {type: 'int'}
     }
-    const errors = this.app.validator.validate(rules, ctx.request.body)
+    let errors = this.app.validator.validate(rulesId, ctx.request.body)
+    if (errors) {
+      const rulesTypeTarget = {
+        type: {type: 'int'},
+        target_id: {type: 'int'}
+      }
+      errors = this.app.validator.validate(rulesTypeTarget, ctx.request.body)
+    }
     if (errors) {
       ctx.body = errors
       ctx.status = 422
       return
     }
-    const { type, target_id } = ctx.request.body;
-    const favorite = await ctx.model.Favorite.findOne({
-      where: {
-        userid: {
-          [Op.eq]: userInfo.openId
-        },
-        type: {
-          [Op.eq]: type
-        },
-        target_id: {
-          [Op.eq]: target_id
+    const { type, target_id, favorite_id} = ctx.request.body;
+    let query 
+    if (favorite_id) {
+      query = {
+        where: {
+          id: {
+            [Op.eq]: favorite_id
+          }
         }
       }
-    })
+    } else {
+      query = {
+        where: {
+          userid: {
+            [Op.eq]: userInfo.openId
+          },
+          type: {
+            [Op.eq]: type
+          },
+          target_id: {
+            [Op.eq]: target_id
+          }
+        }
+      }
+    }
+    const favorite = await ctx.model.Favorite.findOne(query)
     if (!favorite) {
       ctx.status = 400;
-      ctx.body = `favorite type: ${type} and target_id: ${target_id} not exist`;
+      ctx.body = `favoriteid: ${favorite_id} type: ${type} and target_id: ${target_id} not exist`;
       return
     }
     if (favorite.is_del) {
@@ -185,19 +203,7 @@ class FavoriteController extends Controller {
     }
     const updateResult = await ctx.model.Favorite.update(
       { is_del: 1 }, 
-      { 
-        where: {
-          userid: {
-            [Op.eq]: userInfo.openId
-          },
-          type: {
-            [Op.eq]: type
-          },
-          target_id: {
-            [Op.eq]: target_id
-          }
-        } 
-      }
+      query
     )
     const updateCount = updateResult[0]
     if (updateCount != 1) {
