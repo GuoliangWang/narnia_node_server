@@ -121,7 +121,7 @@ class FavoriteController extends Controller {
     } else {
       favorite.is_del = 0
     }
-    const favorite = await ctx.model.Favorite.upsert(favorite);
+    favorite = await ctx.model.Favorite.upsert(favorite);
     ctx.state.data = favorite
   }
 
