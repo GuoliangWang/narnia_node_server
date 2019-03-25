@@ -26,6 +26,8 @@ module.exports = app => {
   router.get(basePath+ '/video/list', waferInst.auth.validationMiddleware, controller.video.list)
   router.post(basePath+ '/video/save', waferInst.auth.validationMiddleware, controller.video.save)
   router.get(basePath+ '/video/info', waferInst.auth.validationMiddleware, controller.video.info)
+  router.post(basePath+ '/video/update', waferInst.auth.validationMiddleware, controller.video.update)
+  router.post(basePath+ '/video/delete', waferInst.auth.validationMiddleware, controller.video.delete)
   router.get(basePath+ '/video/uploaded_list', waferInst.auth.validationMiddleware, controller.video.uploadedList)
   router.get(basePath+ '/favorite/list', waferInst.auth.validationMiddleware, controller.favorite.list)
   router.post(basePath+ '/favorite/save', waferInst.auth.validationMiddleware, controller.favorite.save)

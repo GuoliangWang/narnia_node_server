@@ -186,11 +186,108 @@ class VideoController extends Controller {
   }
 
   async update() {
-
+    const ctx = this.ctx;
+     let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const rules = {
+      id: {type: 'int'},
+    }
+    const errors = this.app.validator.validate(rules, ctx.request.body)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
+    }
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    const { id, privacy } = ctx.request.body;
+    const video =  await ctx.model.Video.findByPk(id);
+    if (!video) {
+      ctx.body = `video id:${id} not exist`
+      ctx.status = 400
+      return
+    }
+    if (video.create_userid !== userInfo.openId) {
+      ctx.body = `you are not creater`
+      ctx.status = 400
+      return
+    }
+    const values = {}
+    if (privacy) {
+      values.privacy = privacy
+    }
+    const updateResult = await ctx.model.Video.update(
+      values, 
+      {
+        where: {
+          id: {
+            [Op.eq]: id
+          }
+      }
+    })
+    if (updateResult[0] === 0) {
+      ctx.body = `did not update anything`
+      ctx.status = 400
+      return
+    }
+    ctx.state.data = "operated"
   }
 
   async delete() {
-
+    const ctx = this.ctx;
+     let userInfo
+    if (ctx.state.$wxInfo.loginState === 1) {
+        // loginState 为 1，登录态校验成功
+        userInfo = ctx.state.$wxInfo.userinfo
+    } else {
+        ctx.state.code = -1
+        return
+    }
+    const rules = {
+      id: {type: 'int'},
+    }
+    const errors = this.app.validator.validate(rules, ctx.request.body)
+    if (errors) {
+      ctx.body = errors
+      ctx.status = 422
+      return
+    }
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
+    const { id } = ctx.request.body;
+    const video =  await ctx.model.Video.findByPk(id);
+    if (!video) {
+      ctx.body = `video id:${id} not exist`
+      ctx.status = 400
+      return
+    }
+    if (video.create_userid !== userInfo.openId) {
+      ctx.body = `you are not creater`
+      ctx.status = 400
+      return
+    }
+    const values = { is_del: 1 }
+    const updateResult = await ctx.model.Video.update(
+      values, 
+      {
+        where: {
+          id: {
+            [Op.eq]: id
+          }
+      }
+    })
+    if (updateResult[0] === 0) {
+      ctx.body = `did not update anything`
+      ctx.status = 400
+      return
+    }
+    ctx.state.data = "operated"
   }
   async approveShow() {
     const ctx = this.ctx;
