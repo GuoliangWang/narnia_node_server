@@ -103,10 +103,26 @@ class FavoriteController extends Controller {
     const { type, target_id } = ctx.request.body;
     // created_at updated_at 看看是否有默认值
     const userid = userInfo.openId
-    const is_del = 0
-    const favorite = await ctx.model.Favorite.create({ type, userid, target_id, is_del });
-    ctx.status = 201;
-    ctx.body = favorite;
+    let favorite = await ctx.model.Favorite.findOne({
+      where: {
+        userid: {
+          [Op.eq]: userid
+        },
+        type: {
+          [Op.eq]: type
+        },
+        target_id: {
+          [Op.eq]: target_id
+        }
+      }
+    })
+    if (!favorite) {
+      favorite = { type, userid, target_id, is_del: 0 }
+    } else {
+      favorite.is_del = 0
+    }
+    const favorite = await ctx.model.Favorite.upsert(favorite);
+    ctx.state.data = favorite
   }
 
   async delete() {
