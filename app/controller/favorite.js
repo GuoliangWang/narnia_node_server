@@ -134,6 +134,9 @@ class FavoriteController extends Controller {
     const { type, target_id } = ctx.request.body;
     const favorite = await ctx.model.Favorite.findOne({
       where: {
+        userid: {
+          [Op.eq]: userInfo.openId
+        },
         type: {
           [Op.eq]: type
         },
@@ -161,6 +164,9 @@ class FavoriteController extends Controller {
       { is_del: 1 }, 
       { 
         where: {
+          userid: {
+            [Op.eq]: userInfo.openId
+          },
           type: {
             [Op.eq]: type
           },
