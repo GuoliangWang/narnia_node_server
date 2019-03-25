@@ -100,6 +100,8 @@ class FavoriteController extends Controller {
       ctx.status = 422
       return
     }
+    const Sequelize = this.app.Sequelize
+    const Op = Sequelize.Op
     const { type, target_id } = ctx.request.body;
     // created_at updated_at 看看是否有默认值
     const userid = userInfo.openId
@@ -119,10 +121,15 @@ class FavoriteController extends Controller {
     if (!favorite) {
       favorite = { type, userid, target_id, is_del: 0 }
     } else {
+      favorite = favorite.toJSON()
       favorite.is_del = 0
     }
-    favorite = await ctx.model.Favorite.upsert(favorite);
-    ctx.state.data = favorite
+    const result = await ctx.model.Favorite.upsert(favorite);
+    if (result) {
+      ctx.state.data = 'created'
+    } else {
+      ctx.state.data = 'unpadted'
+    }
   }
 
   async delete() {
