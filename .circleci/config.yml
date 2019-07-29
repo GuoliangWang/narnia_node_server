@@ -12,9 +12,8 @@ jobs:
         environment:
           MYSQL_ALLOW_EMPTY_PASSWORD: true
           MYSQL_DATABASE: narnia_app
-          MYSQL_PASSWORD: 123456
+          MYSQL_ROOT_PASSWORD: 123456
           MYSQL_ROOT_HOST: "127.0.0.1"
-          MYSQL_USER: root
           
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
