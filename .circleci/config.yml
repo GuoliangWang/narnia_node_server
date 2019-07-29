@@ -8,12 +8,14 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/node:10.15
-      - image: circleci/mariadb:10.3
+      - image: circleci/mariadb:10.3.13
         environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: true
           MYSQL_DATABASE: narnia_app
-          MYSQL_USER: root1
           MYSQL_PASSWORD: 123456
-          MYSQL_HOST: "localhost"
+          MYSQL_ROOT_HOST: "127.0.0.1"
+          MYSQL_USER: root
+          
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
