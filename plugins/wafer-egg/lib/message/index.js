@@ -1,13 +1,15 @@
-const sha1 = require('../helper/sha1')
-const config = require('../../config')
+'use strict';
 
-function checkSignature (signature, timestamp, nonce) {
-    const tmpStr = [config.wxMessageToken, timestamp, nonce].sort().join('')
-    const sign = sha1(tmpStr)
+const sha1 = require('../helper/sha1');
+const config = require('../../config');
 
-    return sign === signature
+function checkSignature(signature, timestamp, nonce) {
+  const tmpStr = [ config.wxMessageToken, timestamp, nonce ].sort().join('');
+  const sign = sha1(tmpStr);
+
+  return sign === signature;
 }
 
 module.exports = {
-    checkSignature
-}
+  checkSignature,
+};

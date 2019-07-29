@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const { INTEGER, DATE, STRING, NOW } = Sequelize;
+    const { INTEGER, DATE, NOW } = Sequelize;
     await queryInterface.createTable('book_last_upload', {
       id: { type: INTEGER, primaryKey: true, autoIncrement: true },
       book_id: INTEGER,
@@ -10,12 +10,12 @@ module.exports = {
       created_at: {
         type: DATE,
         allowNull: false,
-        defaultValue: NOW
+        defaultValue: NOW,
       },
       updated_at: {
         type: DATE,
         allowNull: false,
-        defaultValue: NOW
+        defaultValue: NOW,
       },
     });
   },

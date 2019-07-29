@@ -7,9 +7,9 @@ module.exports = {
       'favorite',
       'is_del',
       INTEGER
-    )
+    );
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('favorite', 'is_del')
-  }
+  down: async queryInterface => {
+    await queryInterface.removeColumn('favorite', 'is_del');
+  },
 };

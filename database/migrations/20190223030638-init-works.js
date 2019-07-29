@@ -14,7 +14,7 @@ module.exports = {
       updated_at: DATE,
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async queryInterface => {
     await queryInterface.dropTable('works');
-  }
+  },
 };

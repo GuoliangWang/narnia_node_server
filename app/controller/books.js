@@ -1,3 +1,5 @@
+'use strict';
+
 // app/controller/users.js
 const Controller = require('egg').Controller;
 

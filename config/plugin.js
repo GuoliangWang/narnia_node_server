@@ -2,27 +2,29 @@
 
 const path = require('path');
 
-/** @type Egg.EggPlugin */
-module.exports = {
+const exps = {
   // had enabled by egg
   // static: {
   //   enable: true,
   // }
 };
 
-module.exports.sequelize = {
+exps.sequelize = {
   enable: true,
-  package: 'egg-sequelize'
-}
-module.exports.wafer = {
+  package: 'egg-sequelize',
+};
+exps.wafer = {
   enable: true,
   path: path.join(__dirname, '../plugins/wafer-egg'),
-}
-module.exports.validate = {
+};
+exps.validate = {
   enable: true,
   package: 'egg-validate',
 };
-module.exports.redis = {
+exps.redis = {
   enable: true,
   package: 'egg-redis',
 };
+
+/** @type Egg.EggPlugin */
+module.exports = exps;

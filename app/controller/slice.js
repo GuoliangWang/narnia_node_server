@@ -1,3 +1,5 @@
+'use strict';
+
 // app/controller/users.js
 const Controller = require('egg').Controller;
 
@@ -8,7 +10,7 @@ function toInt(str) {
 }
 
 class SliceController extends Controller {
-  
+
   async info() {
     const ctx = this.ctx;
     ctx.body = await ctx.model.Slice.findByPk(toInt(ctx.query.id));
@@ -16,15 +18,15 @@ class SliceController extends Controller {
 
   async ref() {
     const { ctx } = this;
-    const errors = this.app.validator.validate({slice_ids: {type: 'string'} }, ctx.query)
+    const errors = this.app.validator.validate({ slice_ids: { type: 'string' } }, ctx.query);
     if (errors) {
-      ctx.body = errors
-      ctx.status = 422
-      return
+      ctx.body = errors;
+      ctx.status = 422;
+      return;
     }
-    const { slice_ids } = ctx.query
-    const last_upload_videos = await ctx.service.lastupload.sliceLastUploadVideos(slice_ids)
-    ctx.state.data = { last_upload_videos }
+    const { slice_ids } = ctx.query;
+    const last_upload_videos = await ctx.service.lastupload.sliceLastUploadVideos(slice_ids);
+    ctx.state.data = { last_upload_videos };
   }
 }
 

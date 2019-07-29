@@ -7,9 +7,9 @@ module.exports = {
       'videos',
       'slice_id',
       INTEGER
-    )
+    );
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('videos', 'slice_id')
-  }
+  down: async queryInterface => {
+    await queryInterface.removeColumn('videos', 'slice_id');
+  },
 };

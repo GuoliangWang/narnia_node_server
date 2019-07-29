@@ -2,7 +2,7 @@
 
 'use strict';
 const env = process.env;
-console.log('default')
+console.log('default');
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
@@ -17,7 +17,7 @@ module.exports = appInfo => {
   config.keys = appInfo.name + '_1550668734085_1152';
 
   // add your middleware config here
-  config.middleware = ['response', 'weixinbodyparser'];
+  config.middleware = [ 'response', 'weixinbodyparser' ];
 
   // add your user config here
   const userConfig = {
@@ -29,7 +29,7 @@ module.exports = appInfo => {
       host: '127.0.0.1',
       port: 3306,
       database: 'narnia_app',
-    }
+    },
   };
 
   userConfig.weixin = {
@@ -43,16 +43,16 @@ module.exports = appInfo => {
      * MySQL 配置，用来存储 session 和用户信息
     */
     mysql: {
-        host: userConfig.sequelize.host,
-        port: userConfig.sequelize.port,
-        user: userConfig.sequelize.username,
-        db: "narnia_auth",
-        pass: userConfig.sequelize.password,
-        char: 'utf8mb4'
+      host: userConfig.sequelize.host,
+      port: userConfig.sequelize.port,
+      user: userConfig.sequelize.username,
+      db: 'narnia_auth',
+      pass: userConfig.sequelize.password,
+      char: 'utf8mb4',
     },
     // 微信登录态有效期
-    wxLoginExpires: 7200
-  }
+    wxLoginExpires: 7200,
+  };
   userConfig.aliOss = {
     AccessKeyId: env.ALI_SDK_STS_ID,
     AccessKeySecret: env.ALI_SDK_STS_SECRET,
@@ -60,60 +60,60 @@ module.exports = appInfo => {
     // 建议 Token 失效时间为 1 小时
     TokenExpireTime: '3600',
     AllPolicy: {
-      "Statement": [
+      Statement: [
         {
-          "Action": [
-            "oss:*"
+          Action: [
+            'oss:*',
           ],
-          "Effect": "Allow",
-          "Resource": ["acs:oss:*:*:*"]
-        }
+          Effect: 'Allow',
+          Resource: [ 'acs:oss:*:*:*' ],
+        },
       ],
-      "Version": "1"
+      Version: '1',
     },
     bucketReadPolicy: {
-      "Statement": [
+      Statement: [
         {
-          "Action": [
-            "oss:GetObject",
-            "oss:ListObjects"
+          Action: [
+            'oss:GetObject',
+            'oss:ListObjects',
           ],
-          "Effect": "Allow",
-          "Resource": ["acs:oss:*:*:narnia-app/*", "acs:oss:*:*:narnia-app"]
-        }
+          Effect: 'Allow',
+          Resource: [ 'acs:oss:*:*:narnia-app/*', 'acs:oss:*:*:narnia-app' ],
+        },
       ],
-      "Version": "1"
+      Version: '1',
     },
     bucketReadWritePolicy: {
-      "Statement": [
+      Statement: [
         {
-          "Action": [
-            "oss:GetObject",
-            "oss:PutObject",
-            "oss:DeleteObject",
-            "oss:ListParts",
-            "oss:AbortMultipartUpload",
-            "oss:ListObjects"
+          Action: [
+            'oss:GetObject',
+            'oss:PutObject',
+            'oss:DeleteObject',
+            'oss:ListParts',
+            'oss:AbortMultipartUpload',
+            'oss:ListObjects',
           ],
-          "Effect": "Allow",
-          "Resource": ["acs:oss:*:*:narnia-app/*", "acs:oss:*:*:narnia-app"]
-        }
+          Effect: 'Allow',
+          Resource: [ 'acs:oss:*:*:narnia-app/*', 'acs:oss:*:*:narnia-app' ],
+        },
       ],
-      "Version": "1"
-    }
-  }
+      Version: '1',
+    },
+  };
   config.security = {
     csrf: {
       enable: false,
-    }
-  }
+    },
+  };
   config.validate = {
     // convert: false,
     // validateRoot: false,
-  }
+  };
   config.logger = {
-    disableConsoleAfterReady: false
-  }
+    disableConsoleAfterReady: false,
+  };
   return {
     ...config,
     ...userConfig,

@@ -3,7 +3,7 @@
 module.exports = {
   // The function called when performing a database upgrade, create a `users` table
   up: async (queryInterface, Sequelize) => {
-    const { INTEGER, DATE, STRING } = Sequelize;
+    const { INTEGER, DATE } = Sequelize;
     await queryInterface.createTable('users', {
       id: { type: INTEGER, primaryKey: true, autoIncrement: true },
       narnia_role: INTEGER,

@@ -9,22 +9,22 @@ module.exports = {
       {
         type: DATE,
         allowNull: false,
-        defaultValue: NOW
+        defaultValue: NOW,
       }
-    )
+    );
     await queryInterface.changeColumn(
       'favorite',
       'updated_at',
       {
         type: DATE,
         allowNull: false,
-        defaultValue: NOW
+        defaultValue: NOW,
       }
-    )
+    );
   },
   down: async (queryInterface, Sequelize) => {
-      'created_at',
-    await queryInterface.changeColumn('favorite', 'created_at', DATE)
-    await queryInterface.changeColumn('favorite', 'updated_at', DATE)
-  }
+    const { DATE } = Sequelize;
+    await queryInterface.changeColumn('favorite', 'created_at', DATE);
+    await queryInterface.changeColumn('favorite', 'updated_at', DATE);
+  },
 };

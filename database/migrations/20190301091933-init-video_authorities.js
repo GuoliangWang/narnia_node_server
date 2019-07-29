@@ -8,10 +8,10 @@ module.exports = {
       id: { type: INTEGER, primaryKey: true, autoIncrement: true },
       video_id: INTEGER,
       user_id: STRING,
-      auth: INTEGER,  // 1 读 
+      auth: INTEGER, // 1 读
       created_at: DATE,
       updated_at: DATE,
-      is_del: INTEGER
+      is_del: INTEGER,
     });
   },
   // The function called when performing a database downgrade, delete the `videos` table

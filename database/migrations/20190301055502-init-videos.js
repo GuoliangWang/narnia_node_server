@@ -13,7 +13,7 @@ module.exports = {
       updated_at: DATE,
       is_del: INTEGER,
       privacy: INTEGER,
-      status: INTEGER  // 审核中 。。。
+      status: INTEGER, // 审核中 。。。
     });
   },
   // The function called when performing a database downgrade, delete the `videos` table

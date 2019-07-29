@@ -6,8 +6,8 @@
  * @param {Egg.EggAppInfo} appInfo app info
  */
 const env = process.env;
-console.log('product')
-module.exports = appInfo => {
+console.log('product');
+module.exports = (/* appInfo*/) => {
   /**
    * built-in config
    * @type {Egg.EggAppConfig}
@@ -23,27 +23,27 @@ module.exports = appInfo => {
       host: '127.0.0.1',
       port: 3306,
       database: 'narnia_app',
-    }
+    },
   };
 
   userConfig.weixin = {
     mysql: {
-        host: userConfig.sequelize.host,
-        port: userConfig.sequelize.port,
-        user: userConfig.sequelize.username,
-        db: "narnia_auth",
-        pass: userConfig.sequelize.password,
-        char: 'utf8mb4'
-    }
-  }
+      host: userConfig.sequelize.host,
+      port: userConfig.sequelize.port,
+      user: userConfig.sequelize.username,
+      db: 'narnia_auth',
+      pass: userConfig.sequelize.password,
+      char: 'utf8mb4',
+    },
+  };
   config.redis = {
     client: {
-      port: 6379,          // Redis port
-      host: '127.0.0.1',   // Redis host
+      port: 6379, // Redis port
+      host: '127.0.0.1', // Redis host
       password: 'redis5566',
       db: 0,
     },
-  }
+  };
   return {
     ...config,
     ...userConfig,

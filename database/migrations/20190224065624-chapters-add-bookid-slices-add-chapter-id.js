@@ -7,15 +7,15 @@ module.exports = {
       'chapters',
       'book_id',
       INTEGER
-    )
+    );
     await queryInterface.addColumn(
       'slices',
       'chapter_id',
       INTEGER
-    )
+    );
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('chapters', 'book_id')
-    await queryInterface.removeColumn('slices', 'chapter_id')    
-  }
+  down: async queryInterface => {
+    await queryInterface.removeColumn('chapters', 'book_id');
+    await queryInterface.removeColumn('slices', 'chapter_id');
+  },
 };

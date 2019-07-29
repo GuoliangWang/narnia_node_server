@@ -7,9 +7,9 @@ module.exports = {
       'messages',
       'status',
       INTEGER
-    )
+    );
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('messages', 'status')
-  }
+  down: async queryInterface => {
+    await queryInterface.removeColumn('messages', 'status');
+  },
 };

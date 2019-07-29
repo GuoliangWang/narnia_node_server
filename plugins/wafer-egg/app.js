@@ -1,6 +1,8 @@
-const config = require('./config')
-const debug = require('debug')('qcloud-sdk[init]')
-const { ERRORS } = require('./lib/constants')
+'use strict';
+
+const config = require('./config');
+const debug = require('debug')('qcloud-sdk[init]');
+const { ERRORS } = require('./lib/constants');
 
 /**
  * 初始化 qcloud sdk
@@ -44,35 +46,35 @@ const { ERRORS } = require('./lib/constants')
  */
 
 module.exports = app => {
-    function init (options) {
-        // 检查配置项
-        const { useQcloudLogin } = options
-        if ([useQcloudLogin].some(v => v === undefined)) throw new Error(ERRORS.ERR_INIT_SDK_LOST_CONFIG)
+  function init(options) {
+    // 检查配置项
+    const { useQcloudLogin } = options;
+    if ([ useQcloudLogin ].some(v => v === undefined)) throw new Error(ERRORS.ERR_INIT_SDK_LOST_CONFIG);
 
-        // const { region, fileBucket, uploadFolder } = cos
-        // if ([region, fileBucket, uploadFolder].some(v => v === undefined)) throw new Error(ERRORS.ERR_INIT_SDK_LOST_CONFIG)
+    // const { region, fileBucket, uploadFolder } = cos
+    // if ([region, fileBucket, uploadFolder].some(v => v === undefined)) throw new Error(ERRORS.ERR_INIT_SDK_LOST_CONFIG)
 
-        if (options.mysql) {
-            const { host, port, user, db, pass } = options.mysql
-            if ([host, port, user, db, pass].some(v => v === undefined)) throw new Error(ERRORS.ERR_INIT_SDK_LOST_CONFIG)
-        }
-
-        // 初始化配置
-        const configs = config.set(options)
-
-        debug('using config: %o', configs)
-
-        return {
-            config,
-            AuthDbService: require('./lib/mysql/AuthDbService'),
-            auth: require('./lib/auth'),
-            ERRORS
-            // uploader: require('./lib/upload'),
-            // tunnel: require('./lib/tunnel'),
-            // message: require('./lib/message'),
-            // ci: require('./lib/ci/ocr'),
-            // voice: require('./lib/voice')
-        }
+    if (options.mysql) {
+      const { host, port, user, db, pass } = options.mysql;
+      if ([ host, port, user, db, pass ].some(v => v === undefined)) throw new Error(ERRORS.ERR_INIT_SDK_LOST_CONFIG);
     }
-    app.wafer = init(app.config.weixin)
+
+    // 初始化配置
+    const configs = config.set(options);
+
+    debug('using config: %o', configs);
+
+    return {
+      config,
+      AuthDbService: require('./lib/mysql/AuthDbService'),
+      auth: require('./lib/auth'),
+      ERRORS,
+      // uploader: require('./lib/upload'),
+      // tunnel: require('./lib/tunnel'),
+      // message: require('./lib/message'),
+      // ci: require('./lib/ci/ocr'),
+      // voice: require('./lib/voice')
+    };
+  }
+  app.wafer = init(app.config.weixin);
 };

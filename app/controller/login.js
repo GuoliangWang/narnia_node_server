@@ -1,3 +1,5 @@
+'use strict';
+
 // app/controller/users.js
 const Controller = require('egg').Controller;
 
@@ -9,7 +11,7 @@ class LoginController extends Controller {
     // 登录信息会被存储到 ctx.state.$wxInfo
     // 具体查看：
     if (ctx.state.$wxInfo.loginState) {
-        ctx.state.data = ctx.state.$wxInfo.userinfo
+      ctx.state.data = ctx.state.$wxInfo.userinfo;
     }
 
   }

@@ -6,8 +6,8 @@ module.exports = {
     await queryInterface.changeColumn(
       'slices',
       'text',
-      {type: STRING(4096)}
-    )
+      { type: STRING(4096) }
+    );
   },
   down: async (queryInterface, Sequelize) => {
     const { STRING } = Sequelize;
@@ -15,6 +15,6 @@ module.exports = {
       'slices',
       'text',
       STRING
-    )
-  }
+    );
+  },
 };
