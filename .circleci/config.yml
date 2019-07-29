@@ -11,8 +11,9 @@ jobs:
       - image: circleci/mariadb:10.3
         environment:
           MYSQL_DATABASE: narnia_app
-          MYSQL_USER: root
+          MYSQL_USER: root1
           MYSQL_PASSWORD: 123456
+          MYSQL_HOST: "localhost"
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
