@@ -24,6 +24,8 @@ jobs:
 
     working_directory: ~/repo
 
+
+
     steps:
       - checkout
 
@@ -49,3 +51,20 @@ jobs:
 
       # run tests!
       - run: yarn test
+
+  deloy:  
+
+    steps:
+    - run: echo "====================部署开始=============================="
+    - run:
+        name: Deploy Over SSH
+        command: |
+          ssh dev$HOST_NAME
+          cd ~/narniar_node_sever
+          npm stop
+          git pull
+          npm install --production
+          npx sequelize db:migrate --env=production
+          npm start
+    - run: echo "====================部署完毕=============================="
+  
