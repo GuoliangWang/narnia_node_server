@@ -63,7 +63,7 @@ jobs:
     - run:
         name: Deploy Over SSH
         command: |
-          ssh dev@39.96.63.143 "cd ~/narnia_node_server npm stop git pull npm install --production npx sequelize db:migrate --env=production"
+          ssh dev@39.96.63.143 "cd ~/narnia_node_server; npm stop; git pull; npm install --production; npx sequelize db:migrate --env=production;"
     - run: echo "====================部署完毕=============================="
   
 workflows:
