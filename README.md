@@ -2,6 +2,8 @@
 
 for narnia app back end 
 
+![CircleCI](https://img.shields.io/circleci/build/github/GuoliangWang/narnia_node_server/master)
+
 ## QuickStart
 
 <!-- add docs here for user -->
