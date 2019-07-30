@@ -1,7 +1,7 @@
 'use strict';
 
 // const fs = require('fs');
-console.log('env:')
+console.log('env:');
 console.log(process.env);
 const env = process.env;
 console.log('env.MySQL_PASSWORD', env.MySQL_PASSWORD);
