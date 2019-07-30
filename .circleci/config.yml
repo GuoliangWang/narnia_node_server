@@ -63,7 +63,7 @@ jobs:
     - run:
         name: Deploy Over SSH
         command: |
-          ssh dev$HOST_NAME
+          ssh dev@39.96.63.143
           cd ~/narniar_node_sever
           npm stop
           git pull
