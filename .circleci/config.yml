@@ -64,7 +64,7 @@ jobs:
         name: Deploy Over SSH
         command: |
           ssh dev@39.96.63.143
-          cd ~/narniar_node_sever
+          cd ~/narnia_node_server
           npm stop
           git pull
           npm install --production
