@@ -52,8 +52,12 @@ jobs:
       # run tests!
       - run: yarn test
 
-  deloy:  
-
+  deploy:  
+    machine:
+      timezone:
+        Asia/Shanghai # 设置上海时区
+      enabled: true
+    working_directory: ~/repo
     steps:
     - run: echo "====================部署开始=============================="
     - run:
