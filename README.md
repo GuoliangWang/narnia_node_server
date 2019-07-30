@@ -2,7 +2,7 @@
 
 for narnia app back end 
 
-![CircleCI](https://img.shields.io/circleci/build/github/GuoliangWang/narnia_node_server/master)
+[![CircleCI](https://img.shields.io/circleci/build/gh/GuoliangWang/narnia_node_server/master)](https://circleci.com/gh/GuoliangWang/narnia_node_server)
 
 ## QuickStart
 
